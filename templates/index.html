@@ -2,13 +2,90 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Google Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inizio - Google Search</title>
 </head>
+
 <body>
-    <form action="/search" method="POST">
-        <input type="text" id="keyword" name="keyword">
+
+    <h1>Google Search</h1>
+
+    <form id="searchForm">
+        <input
+            type="text"
+            id="keyword"
+            name="keyword"
+            placeholder="Zadejte hledaný výraz"
+            required
+        >
+
         <button type="submit">Hledat</button>
     </form>
+
+    <p id="message"></p>
+
+    <div id="results"></div>
+
+    <script>
+        const form = document.getElementById("searchForm");
+        const resultsDiv = document.getElementById("results");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            resultsDiv.replaceChildren();
+            message.textContent = "Vyhledávám...";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/search", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Nastala chyba.");
+                }
+
+                message.textContent = "";
+
+                if (data.length === 0) {
+                    message.textContent = "Nebyly nalezeny žádné výsledky.";
+                    return;
+                }
+
+                data.forEach(result => {
+                    const article = document.createElement("div");
+
+                    const title = document.createElement("h3");
+                    const link = document.createElement("a");
+                    const snippet = document.createElement("p");
+
+                    title.textContent = result.title || "Bez názvu";
+
+                    link.href = result.link || "#";
+                    link.textContent = result.link || "Bez odkazu";
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+
+                    snippet.textContent = result.snippet || "";
+
+                    article.appendChild(title);
+                    article.appendChild(link);
+                    article.appendChild(snippet);
+
+                    resultsDiv.appendChild(article);
+                });
+
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        });
+    </script>
 
 </body>
 </html>
